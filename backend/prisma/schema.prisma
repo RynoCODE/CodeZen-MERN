@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum languages {
+  js
+  c
+  cpp
+}
+
+model questions {
+  question_id      Int               @id @default(autoincrement())
+  question         String
+  description      String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  code_submit      code_submit[]
+  codes_run        codes_run[]
+  question_template question_template[]
+}
+
+model codes_run {
+  id               Int               @id @default(autoincrement())
+  question_id      Int
+  user_id          Int
+  code             String
+  output           String
+  status           String            // Added to track pass/fail status for test cases
+  language         languages
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  question         questions         @relation(fields: [question_id], references: [question_id])
+}
+
+model code_submit {
+  id               Int               @id @default(autoincrement())
+  user_id          Int
+  question_id      Int
+  code             String
+  output           String
+  language         languages
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  question         questions         @relation(fields: [question_id], references: [question_id])
+}
+
+model question_template {
+  id               Int               @id @default(autoincrement())
+  question_id      Int
+  language         languages
+  template         String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  question         questions         @relation(fields: [question_id], references: [question_id])
+  testcases        testcases[]
+}
+
+model testcases {
+  id               Int               @id @default(autoincrement())
+  template_id      Int
+  input            String            // Added for input data of test cases
+  expected_output  String            // Added for expected output of test cases
+  main             String
+
+  question_template question_template @relation(fields: [template_id], references: [id])
+}
