@@ -1,12 +1,25 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import MonacoEditor from "@monaco-editor/react";
+// import { getAuth } from "firebase/auth";
+import axios from 'axios';
+// import { app } from "../utils/firebase";
+// import { GoogleAuthProvider } from "firebase/auth";
+// import firebase from 'firebase/compat/app';
+// import 'firebase/compat/auth';
+// const auth = getAuth(app);
+// const provider = new GoogleAuthProvider();
+
+
 
 interface Question {
   question: string;
   description: string;
   question_template: { language: string; template: string }[];
 }
+
+// Declare the global variable
+let session: string | undefined;
 
 const QuestionSolver = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +28,7 @@ const QuestionSolver = () => {
     "cpp"
   );
   const [code, setCode] = useState<string>("");
-  const editorRef = useRef<any>(null);
+  // const editorRef = useRef<any>(null);
 
   async function fetchQuestion() {
     try {
@@ -23,8 +36,8 @@ const QuestionSolver = () => {
       const data = await response.json();
       setQuestion(data);
       if (data.question_template.length > 0) {
-        const initialTemplate = data.question_template.find(
-          (template) => template.language === selectedLanguage
+        const initialTemplate: { language: string; template: string } | undefined = data.question_template.find(
+          (template: { language: string; template: string }) => template.language === selectedLanguage
         );
         if (initialTemplate) {
           setCode(parseTemplateCode(initialTemplate.template));
@@ -43,7 +56,7 @@ const QuestionSolver = () => {
   const generateUUID = () => {
     return Math.floor(100000 + Math.random() * 900000);
   };
-
+  // const uuid = generateUUID;
   const parseTemplateCode = (template: string) => {
     return template
       .replace(/\\n/g, "\n") // Replace escaped newlines
@@ -57,7 +70,7 @@ const QuestionSolver = () => {
     }
   };
 
-  const handleLanguageChange = (newLanguage: "python" | "c" | "cpp" | "js") => {
+  const handleLanguageChange = (newLanguage: "c" | "cpp" | "js") => {
     setSelectedLanguage(newLanguage);
     const newTemplate = question?.question_template.find(
       (template) => template.language === newLanguage
@@ -68,9 +81,39 @@ const QuestionSolver = () => {
   };
 
   // Determine the language to be used in MonacoEditor
-  const editorLanguage =
-    selectedLanguage === "js" ? "javascript" : selectedLanguage;
+  const editorLanguage = selectedLanguage === "js" ? "javascript" : selectedLanguage;
+  // firebase.auth().onAuthStateChanged((user) => {
+  //     // User logged in already or has just logged in.
+  //     if (user) {
+  //       console.log(user.uid);
+  //       // Assign the value to the global variable
+  //       session = user.uid;
+  //     } else {
+  //       console.log("No user is logged in.");
+  //     }
+  // });
+    const handleSubmit = async () => {
+      // if (!session) {
+      //   console.error("User is not logged in.");
+      //   console.log("User is not logged in.")
+      //   return;
+      // }
+      try {
 
+        const res = await axios.post('http://192.168.0.136:3000/run', {
+          language: selectedLanguage,
+          code: code,
+          userId: 123,
+          problemId: id,
+          uuid: generateUUID()
+        });
+        console.log(session);
+        console.log('Code submitted successfully:', res.data);
+      } catch (error) {
+        console.error('Error submitting code:', error);
+      }
+    };
+  
   return (
     <div className="flex flex-col h-screen">
       <header className="p-4 bg-gray-800 text-white flex items-center justify-between">
@@ -78,7 +121,7 @@ const QuestionSolver = () => {
           {question ? question.question : "Loading..."}
         </h1>
         <div className="buttons flex gap-4">
-          <button className="bg-blue-500 text-white p-2 mt-2 rounded">
+          <button className="bg-blue-500 text-white p-2 mt-2 rounded" onClick={handleSubmit}>
             Run Code
           </button>
           <button className="bg-green-500 text-white p-2 mt-2 rounded">

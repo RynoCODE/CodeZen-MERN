@@ -107,6 +107,7 @@ export const Signin = () => {
         }
         const user = result.user;
         console.log(user);
+        localStorage.setItem('userId', user.uid);
       })
       .catch((error) => {
         const errorCode = error.code;

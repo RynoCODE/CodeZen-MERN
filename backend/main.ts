@@ -2,9 +2,11 @@ import express from "express";
 import routes from "./routes";
 import rateLimit from "express-rate-limit";
 const compression = require('compression')
+const cors = require("cors");
 
 const port = 3000;
 const app = express();
+app.use(cors());
 
 app.use(compression({
   level: 6,
